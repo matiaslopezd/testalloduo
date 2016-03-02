@@ -38,12 +38,12 @@
   var stopButtonPressed = false;
   var localStream = null;
   var getUserMediaLoop = null;
-  var runCounter = 0;
+  var runCounter = -1;
 
   startButton.addEventListener('click', startGetUserMediaSequence);
 
   stopButton.addEventListener('click', function() {
-    stopButtonPressed = (stopButtonPressed ? false : true);
+    stopButton.disabled = (stopButton.disabled ? false : true);
     startButton.disabled = false;
   });
 
@@ -58,7 +58,10 @@
   }
 
   function startGetUserMediaSequence() {
+    runCounter++
     logging('Loop started');
+    startButton.disabled = true;
+    stopButton.disabled = false;
     getUserMediaLoop = setTimeout(callGetUserMedia, timer.value);
   }
 
@@ -72,7 +75,7 @@
   }
 
   function callGetUserMedia() {
-    if (!stopButtonPressed) {
+    if (!stopButton.disabled) {
       navigator.mediaDevices.getUserMedia({video: false, audio: true})
       .then(function(stream) {
         if (localStream) {
@@ -80,7 +83,6 @@
         }
         audioElement.srcObject = stream;
         localStream = stream;
-        runCounter++
         startGetUserMediaSequence();
       })
       .catch(function(error) {
