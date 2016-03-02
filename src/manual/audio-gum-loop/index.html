@@ -17,40 +17,52 @@
 
 </head>
 <body onload="startGetUserMediaSequence();">
+  Audio getUserMedia loop that starts on page load
   <table border="0">
     <tr>
-      <td>Sound test</td>
-    </tr>
-    <tr>
       <td><audio id="audio1" autoplay="autoplay"></audio></td>
+      <td><button id="start" disabled>Start getUserMedia loop</button></td>
       <td><button id="stop">Stop getUserMedia loop</button></td>
       <td><input id="timer" value="3000">Time in MS between loops</input></td>
     </tr>
   </table>
+  Logging:
+  <div id="log"></div>
   <script type="text/javascript">
 
   var audioElement = document.querySelector('#audio1');
+  var startButton = document.querySelector('#start');
   var stopButton = document.querySelector('#stop');
-  var timer = document.querySelector('#timer')
+  var timer = document.querySelector('#timer');
+  var log = document.querySelector('#log');
   var stopButtonPressed = false;
   var localStream = null;
   var getUserMediaLoop = null;
+  var runCounter = 0;
 
+  startButton.addEventListener('click', startGetUserMediaSequence);
 
   stopButton.addEventListener('click', function() {
     stopButtonPressed = (stopButtonPressed ? false : true);
+    startButton.disabled = false;
   });
 
   timer.addEventListener('çhange'), function() {
     timer.value = timer.value;
   }
 
+  function logging(message) {
+    log.innerHTML += '<span>Run number: ' + runCounter + ' - '+  message +
+        '</span><br>';
+    console.log(message);
+  }
+
   function startGetUserMediaSequence() {
+    logging('Loop started');
     getUserMediaLoop = setTimeout(callGetUserMedia, timer.value);
   }
 
   function clearLocalStreams() {
-    console.log('Clearing local streams');
     if (localStream) {
       localStream.getTracks().forEach(function(track) {
         track.stop();
@@ -60,7 +72,6 @@
   }
 
   function callGetUserMedia() {
-    console.log('Request getUserMedia');
     if (!stopButtonPressed) {
       navigator.mediaDevices.getUserMedia({video: false, audio: true})
       .then(function(stream) {
@@ -69,13 +80,14 @@
         }
         audioElement.srcObject = stream;
         localStream = stream;
+        runCounter++
         startGetUserMediaSequence();
       })
       .catch(function(error) {
         alert('getUserMedia failed: ' + error);
       })
     } else {
-      console.log('stopping gum loop');
+      logging('Loop stopped');
       clearLocalStreams();
       clearTimeout(startGetUserMediaSequence);
       return;
