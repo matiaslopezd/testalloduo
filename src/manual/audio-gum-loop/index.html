@@ -16,7 +16,7 @@
   <script src="adapter.js"></script>
 
 </head>
-<body onload="callGetUserMedia();">
+<body onload="startGetUserMediaSequence();">
   <table border="0">
     <tr>
       <td>Sound test</td>
@@ -24,22 +24,39 @@
     <tr>
       <td><audio id="audio1" autoplay="autoplay"></audio></td>
       <td><button id="stop">Stop getUserMedia loop</button></td>
+      <td><input id="timer" value="3000">Time in MS between loops</input></td>
     </tr>
   </table>
   <script type="text/javascript">
 
   var audioElement = document.querySelector('#audio1');
   var stopButton = document.querySelector('#stop');
+  var timer = document.querySelector('#timer')
   var stopButtonPressed = false;
   var localStream = null;
   var getUserMediaLoop = null;
+
 
   stopButton.addEventListener('click', function() {
     stopButtonPressed = (stopButtonPressed ? false : true);
   });
 
+  timer.addEventListener('çhange'), function() {
+    timer.value = timer.value;
+  }
+
   function startGetUserMediaSequence() {
-    getUserMediaLoop = setTimeout(callGetUserMedia, 3000);
+    getUserMediaLoop = setTimeout(callGetUserMedia, timer.value);
+  }
+
+  function clearLocalStreams() {
+    console.log('Clearing local streams');
+    if (localStream) {
+      localStream.getTracks().forEach(function(track) {
+        track.stop();
+      })
+      localStream = null;
+    }
   }
 
   function callGetUserMedia() {
@@ -48,12 +65,9 @@
       navigator.mediaDevices.getUserMedia({video: false, audio: true})
       .then(function(stream) {
         if (localStream) {
-          console.log('Existing stream exist, stopping tracks.')
-          localStream.getTracks().forEach(function(track) {
-            track.stop();
-          })
+          clearLocalStreams();
         }
-        attachMediaStream(audioElement, stream);
+        audioElement.srcObject = stream;
         localStream = stream;
         startGetUserMediaSequence();
       })
@@ -62,6 +76,7 @@
       })
     } else {
       console.log('stopping gum loop');
+      clearLocalStreams();
       clearTimeout(startGetUserMediaSequence);
       return;
     }
