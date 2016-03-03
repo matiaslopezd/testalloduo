@@ -75,7 +75,7 @@
     }
   }
 
-function continueLoop() {
+function continueLoop(stream) {
   if (!stopButton.disabled) {
     audioElement.srcObject = localStream;
     startGetUserMediaSequence();
@@ -98,8 +98,11 @@ function stop() {
         var time = Date.now();
         if (localStream) {
           clearLocalStreams();
-          localStream = stream;
-          wait = setTimeout(continueLoop, timer.value);
+
+          wait = setTimeout(function() {
+            localStream = stream;
+            continueLoop();
+          }.bind(stream), timer.value);
         } else {
           localStream = stream;
           continueLoop();
