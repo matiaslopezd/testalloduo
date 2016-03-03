@@ -36,8 +36,8 @@
   var timer = document.querySelector('#timer');
   var log = document.querySelector('#log');
   var localStream = null;
-  var getUserMediaLoop = null;
-  var wait = null;
+  var waitBeforeStartingGum = null;
+  var waitBeforeStoppingGum = null;
   var runCounter = -1;
 
   startButton.addEventListener('click', startGetUserMediaSequence);
@@ -58,25 +58,33 @@
   }
 
   function startGetUserMediaSequence() {
-    runCounter++
-    logging('Loop started');
-    startButton.disabled = true;
-    stopButton.disabled = false;
-    getUserMediaLoop = setTimeout(callGetUserMedia, timer.value);
-  }
-
-  function clearLocalStreams() {
     if (localStream) {
-      logging('Tracks stopped');
-      localStream.getTracks().forEach(function(track) {
-        track.stop();
-      })
-      localStream = null;
+      clearLocalStreams();
+    } else {
+      startButton.disabled = true;
+      stopButton.disabled = false;
+      runCounter++
+      logging('Loop started');
+      callGetUserMedia();
     }
   }
 
-function continueLoop(stream) {
+  function clearLocalStreams() {
+    logging('Tracks stopped');
+    localStream.getTracks().forEach(function(track) {
+      track.stop();
+    })
+    audioElement.srcObject = null;
+    localStream = null;
+    if (!stopButton.disabled) {
+      waitBeforeStartingGum =
+          setTimeout(startGetUserMediaSequence, timer.value);
+    }
+  }
+
+function continueLoop() {
   if (!stopButton.disabled) {
+    logging('Continue Loop')
     audioElement.srcObject = localStream;
     startGetUserMediaSequence();
   } else {
@@ -86,27 +94,21 @@ function continueLoop(stream) {
 
 function stop() {
   logging('Loop stopped');
-  clearLocalStreams();
-  clearTimeout(startGetUserMediaSequence);
-  clearTimeout(wait);
+  if (localStream) {
+    clearLocalStreams();
+  }
+  clearTimeout(waitBeforeStartingGum);
+  clearTimeout(waitBeforeStoppingGum);
 }
 
   function callGetUserMedia() {
     if (!stopButton.disabled) {
       navigator.mediaDevices.getUserMedia({video: false, audio: true})
       .then(function(stream) {
-        var time = Date.now();
-        if (localStream) {
-          clearLocalStreams();
-
-          wait = setTimeout(function() {
-            localStream = stream;
-            continueLoop();
-          }.bind(stream), timer.value);
-        } else {
           localStream = stream;
-          continueLoop();
-        }
+          console.log('gum stream' + stream);
+          audioElement.srcObject = stream;
+          waitBeforeStoppingGum = setTimeout(continueLoop, timer.value);
       })
       .catch(function(error) {
         if (localStream) {
