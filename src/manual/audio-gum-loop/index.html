@@ -37,6 +37,7 @@
   var log = document.querySelector('#log');
   var localStream = null;
   var getUserMediaLoop = null;
+  var wait = null;
   var runCounter = -1;
 
   startButton.addEventListener('click', startGetUserMediaSequence);
@@ -66,6 +67,7 @@
 
   function clearLocalStreams() {
     if (localStream) {
+      logging('Tracks stopped');
       localStream.getTracks().forEach(function(track) {
         track.stop();
       })
@@ -73,25 +75,44 @@
     }
   }
 
+function continueLoop() {
+  if (!stopButton.disabled) {
+    audioElement.srcObject = localStream;
+    startGetUserMediaSequence();
+  } else {
+    stop();
+  }
+}
+
+function stop() {
+  logging('Loop stopped');
+  clearLocalStreams();
+  clearTimeout(startGetUserMediaSequence);
+  clearTimeout(wait);
+}
+
   function callGetUserMedia() {
     if (!stopButton.disabled) {
       navigator.mediaDevices.getUserMedia({video: false, audio: true})
       .then(function(stream) {
+        var time = Date.now();
+        if (localStream) {
+          clearLocalStreams();
+          localStream = stream;
+          wait = setTimeout(continueLoop, timer.value);
+        } else {
+          localStream = stream;
+          continueLoop();
+        }
+      })
+      .catch(function(error) {
         if (localStream) {
           clearLocalStreams();
         }
-        audioElement.srcObject = stream;
-        localStream = stream;
-        startGetUserMediaSequence();
-      })
-      .catch(function(error) {
         alert('getUserMedia failed: ' + error);
       })
     } else {
-      logging('Loop stopped');
-      clearLocalStreams();
-      clearTimeout(startGetUserMediaSequence);
-      return;
+      stop();
     }
   }
   </script>
