@@ -74,7 +74,7 @@
     localStream.getTracks().forEach(function(track) {
       track.stop();
     })
-    audioElement.srcObject = null;
+    // audioElement.srcObject = null;
     localStream = null;
     if (!stopButton.disabled) {
       waitBeforeStartingGum =
@@ -85,7 +85,6 @@
 function continueLoop() {
   if (!stopButton.disabled) {
     logging('Continue Loop')
-    audioElement.srcObject = localStream;
     startGetUserMediaSequence();
   } else {
     stop();
